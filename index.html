@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Research Hub – Gemini, ChatGPT aur Google ek saath</title>
+<meta name="description" content="Ek hi sawal par Gemini, ChatGPT aur Google ke jawab ek saath dekhiye aur AI-combined summary payiye. Free AI research tool.">
+<link rel="canonical" href="https://YOUR-DOMAIN.com/">
+<meta property="og:title" content="Research Hub – Gemini, ChatGPT aur Google ek saath">
+<meta property="og:description" content="Ek sawal, teen sources, ek combined summary.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://YOUR-DOMAIN.com/">
+<!-- Google Search Console verification: yahan apna tag paste kijiye -->
+<!-- <meta name="google-site-verification" content="XXXX"> -->
+<style>
+:root{--bg:#f6f7fb;--card:#fff;--text:#161a2b;--muted:#5d6480;--line:#e1e4ef;--a:#4f46e5;--b:#7c3aed;--err:#c0392b}
+@media (prefers-color-scheme:dark){:root{--bg:#0e1020;--card:#171a30;--text:#eceefb;--muted:#9aa1c4;--line:#2a2f52;--a:#8b83ff;--b:#a78bfa;--err:#ff8a80}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;line-height:1.55}
+.w{max-width:1000px;margin:0 auto;padding:24px 16px 56px}
+h1{margin:0 0 4px;font-size:1.8rem;background:linear-gradient(90deg,var(--a),var(--b));-webkit-background-clip:text;background-clip:text;color:transparent}
+.sub{color:var(--muted);margin:0 0 20px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px;margin-bottom:16px}
+textarea,select{width:100%;padding:12px;border-radius:12px;border:1px solid var(--line);background:var(--bg);color:var(--text);font:inherit}
+textarea{min-height:100px;resize:vertical;margin-bottom:10px}
+.row{display:flex;gap:10px;flex-wrap:wrap}.row select{flex:1 1 220px}
+button{font:inherit;cursor:pointer;border:0;border-radius:12px;padding:12px 20px;color:#fff;font-weight:600;background:linear-gradient(90deg,var(--a),var(--b))}
+button:disabled{opacity:.6;cursor:wait}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px}
+h2{font-size:1rem;margin:0 0 10px}
+.txt{white-space:pre-wrap;overflow-wrap:anywhere;font-size:.95rem}
+.err{color:var(--err)}.muted{color:var(--muted)}
+.sum{border:2px solid var(--a)}
+.g{padding:8px 0;border-top:1px solid var(--line)}.g:first-of-type{border-top:0}
+.g a{color:var(--a);font-weight:600;text-decoration:none}.g p{margin:2px 0 0;font-size:.88rem;color:var(--muted)}
+footer{color:var(--muted);font-size:.8rem;text-align:center;margin-top:24px}
+</style>
+</head>
+<body>
+<main class="w">
+  <h1>Research Hub</h1>
+  <p class="sub">Ek sawal – Gemini, ChatGPT aur Google ke jawab ek saath, aur ek combined summary.</p>
+  <section class="card">
+    <textarea id="q" maxlength="2000" placeholder="Apna research topic likhiye…"></textarea>
+    <div class="row">
+      <select id="mode" aria-label="Research mode">
+        <option value="plain">Seedha sawal</option><option value="deep">Deep research</option>
+        <option value="summary">Short summary</option><option value="compare">Pros / Cons</option>
+        <option value="fact">Fact-check</option><option value="simple">Aasan Hindi</option>
+      </select>
+      <button id="go">🔎 Research karo</button>
+    </div>
+  </section>
+  <section id="out" hidden>
+    <div class="card sum"><h2>✨ Combined Summary</h2><div class="txt" id="summary"></div></div>
+    <div class="grid">
+      <div class="card"><h2>Gemini</h2><div class="txt" id="gemini"></div></div>
+      <div class="card"><h2>ChatGPT</h2><div class="txt" id="chatgpt"></div></div>
+      <div class="card"><h2>Google results</h2><div id="google"></div></div>
+    </div>
+  </section>
+  <footer>AI jawab galat ho sakte hain – zaroori baat ko sources se verify kijiye.</footer>
+</main>
+<script>
+const $ = (i) => document.getElementById(i);
+function show(id, r) {
+  const el = $(id); el.textContent = "";
+  if (!r) { el.textContent = "Koi data nahi."; el.className = "txt muted"; return; }
+  if (!r.ok) { el.textContent = "⚠ " + r.error; el.className = "txt err"; return; }
+  el.className = "txt"; el.textContent = r.data;
+}
+function showGoogle(r) {
+  const el = $("google"); el.textContent = "";
+  if (!r.ok) { el.innerHTML = '<p class="err"></p>'; el.firstChild.textContent = "⚠ " + r.error; return; }
+  if (!r.data.length) { el.textContent = "Koi result nahi mila."; return; }
+  r.data.forEach((i) => {
+    const d = document.createElement("div"); d.className = "g";
+    const a = document.createElement("a"); a.href = i.link; a.target = "_blank"; a.rel = "noopener noreferrer"; a.textContent = i.title;
+    const p = document.createElement("p"); p.textContent = i.snippet || "";
+    d.append(a, p); el.append(d);
+  });
+}
+$("go").onclick = async () => {
+  const query = $("q").value.trim(); if (!query) return $("q").focus();
+  const b = $("go"); b.disabled = true; b.textContent = "Research ho rahi hai…";
+  try {
+    const r = await fetch("/api/research", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ query, mode: $("mode").value }) });
+    const d = await r.json();
+    if (!r.ok) throw new Error(d.error || "Server error");
+    $("out").hidden = false;
+    show("summary", d.summary); show("gemini", d.gemini); show("chatgpt", d.chatgpt); showGoogle(d.google);
+    $("out").scrollIntoView({ behavior: "smooth" });
+  } catch (e) { alert(e.message); }
+  b.disabled = false; b.textContent = "🔎 Research karo";
+};
+</script>
+</body>
+</html>

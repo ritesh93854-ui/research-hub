@@ -1,0 +1,12 @@
+{
+  "name": "research-hub",
+  "version": "1.0.0",
+  "description": "Gemini + ChatGPT + Google research in one place, with a combined summary",
+  "main": "server.js",
+  "engines": { "node": ">=20.6" },
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --env-file=.env --watch server.js"
+  },
+  "dependencies": { "express": "^4.21.2" }
+}
